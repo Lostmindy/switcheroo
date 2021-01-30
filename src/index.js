@@ -30,6 +30,7 @@ export function Switcheroo(selector = '#switcheroo', options = {}) {
 Switcheroo.prototype.init = function() {
 	this.credentials();
 	this.build();
+	this.handler()
 };
 
 Switcheroo.prototype.credentials = function() {
@@ -92,6 +93,14 @@ Switcheroo.prototype.build = function() {
 		wrapper.appendChild(list);
 	});
 
+	/* options */
+	const login = document.createElement('li');
+	login.classList.add(c + 'squircle', c + 'squircle--button');
+	login.dataset.action = 'open-login';
+	login.innerHTML = this.options.addIcon;
+	login.appendChild(this.createTooltip('Associer un personnage'))
+	wrapper.appendChild(login);
+
 	docFrag.appendChild(wrapper);
 
 	document.querySelector(this.selector).appendChild(docFrag);
@@ -109,4 +118,10 @@ Switcheroo.prototype.createTooltip = function(tooltip) {
 	textNode.innerHTML = tooltip;
 	popper.appendChild(textNode);
 	return popper;
+};
+
+Switcheroo.prototype.handler = function() {
+	let t = this;
+
+
 };
