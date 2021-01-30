@@ -3,7 +3,7 @@ const path = require('path');
 module.exports = {
 	entry: './src/index.js',
 	output: {
-		library: 'Switcheroo',
+		library: 'Monomer',
 	    libraryTarget: 'umd',
 	    libraryExport: 'default',
 		filename: 'main.js',
