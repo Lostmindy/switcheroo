@@ -1,12 +1,21 @@
 import Fetcher from 'core/fetcher.js';
-import { User } from 'core/FA.js';
+import { User, Login, Logout } from 'core/FA.js';
 
 export function Switcheroo(selector = '#switcheroo', options = {}) {
 	this.selector = selector;
 
 	var defaults = {
-		classBlock: 'switcheroo__'
-	};
+  		logo: '',
+  		confirm: true,
+  		explore: false,
+  		formAutocomplete: 'off',
+  		classBlock: 'switcheroo__',
+  		deleteIcon: `×`,
+  		addIcon: `+`,
+  		errorMsg: 'Une erreur est surviendue lors du Switcheroo.',
+  		confirmMsg: 'Confirmer le Switcheroo de personnage ?',
+  		modal: {}
+  	};
 
 	// extend default
 	if(options && typeof options == "object") {
