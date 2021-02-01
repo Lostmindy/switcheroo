@@ -1,1 +1,1 @@
-var MONOMER;MONOMER=(()=>{var e={138:()=>{class e extends HTMLElement{constructor(){super()}}customElements.define("switcheroo",e)}},r={};return function t(s){if(r[s])return r[s].exports;var n=r[s]={exports:{}};return e[s](n,n.exports,t),n.exports}(138)})();
+var MONOMER;MONOMER=(()=>{var e={138:()=>{class e extends HTMLElement{constructor(){super()}}customElements.define("m-switcheroo",e)}},r={};return function t(s){if(r[s])return r[s].exports;var n=r[s]={exports:{}};return e[s](n,n.exports,t),n.exports}(138)})();

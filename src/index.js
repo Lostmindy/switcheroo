@@ -3,4 +3,5 @@ class Switcheroo extends HTMLElement {
     	super();
   	}
 }
-customElements.define("switcheroo", Switcheroo);
+
+customElements.define("m-switcheroo", Switcheroo);
