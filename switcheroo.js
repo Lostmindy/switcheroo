@@ -299,24 +299,21 @@
 		const buttons = this.options.customButtons;
 		const c = this.options.blockClass;
 		if (buttons.length > 0) {
-			let orderIndex = 1;
 			buttons.forEach(el => {
 				if(!el) return;
 				let button;
 				if (monomer.isValidURL(el.action)) {
 					button = document.createElement('a');
 					button.href = el.action;
-				} else {
+				}
+				if (!typeof el.action === 'function') {
 					button = document.createElement('div');
-					if (typeof el.action === 'function') {
-						button.addEventListener('click', function(e) {
-							el.action.call(t, e, this);
-						});
-					}
+					button.addEventListener('click', function(e) {
+						el.action.call(t, e, this);
+					});
 				}
-				if (typeof el.before === "boolean" && el.before) {
-					button.style.order = "-1";
-				}
+				if(!button) return false;
+				if (typeof el.before === "boolean" && el.before) button.style.order = "-1";
 				button.classList.add(c + '__squircle', c + '__button');
 				button.innerHTML = el.html;
 				if(el.tooltip && typeof el.tooltip === "string") button.appendChild(this.createTooltip(el.tooltip));
