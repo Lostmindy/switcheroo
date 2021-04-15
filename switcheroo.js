@@ -210,64 +210,15 @@
 
 		let docFrag = document.createDocumentFragment();
 
-		// wrapper
 		let wrapper = document.createElement('ul');
 		wrapper.classList.add(c + '__squircles');
 
-		const divider = document.createElement('li');
-		divider.classList.add(c + '__divider');
-
-		// if logo given
 		if (this.options.logo) {
-			let logo = document.createElement('a');
-			logo.classList.add(c + '__squircle', c + '__logo');
-			logo.href = '/';
-			logo.innerHTML = this.options.logo;
-			logo.appendChild(this.createTooltip('Accueil'));
-			wrapper.appendChild(logo);
-			wrapper.appendChild(divider);
+			this.createLogoElement(wrapper);
 		}
 		
 		this.switcherooCredentials.forEach(el => {
-			// create list item
-			let list = document.createElement("li");
-			list.classList.add(c + '__squircle');
-			list.dataset.id = el.id;
-			list.classList.toggle('active', (el.id == monomer.user().id()));
-			/* draggable */
-			if (this.options.enableReorder) {
-				list.draggable = true;
-				list.addEventListener('dragstart', this.dragStart.bind(this));
-				list.addEventListener('dragover', this.dragOver.bind(this));
-				list.addEventListener('dragend', this.dragEnd.bind(this));
-			}
-			list.dataset.action = 'switcheroo';
-			
-
-			// create avatar
-			let avatar = document.createElement("div")
-			avatar.classList.add(c + '__avatar');
-			avatar.innerHTML = el.avatar.replace(/\\"/g, '"');
-			if (this.options.enableReorder) {
-				avatar.draggable = false;
-				avatar.querySelector('img').draggable = false;
-			}
-			list.appendChild(avatar);
-
-			// create popper
-			list.appendChild(this.createTooltip(el.username));
-
-			// create delete
-			let del = document.createElement('div');
-			del.classList.add(c + '__delete');
-			if (this.options.enableReorder) {
-				del.draggable = false;
-			}
-			del.innerHTML = this.options.deleteIcon;
-			list.appendChild(del);		
-
-			wrapper.appendChild(list);
-			
+			this.createSwitcherooUser(el, wrapper);
 		});
 
 		/* options */
@@ -278,9 +229,84 @@
 		login.appendChild(this.createTooltip('Associer un personnage'))
 		wrapper.appendChild(login);
 
+		this.createCustomButtons(wrapper);
+
 		docFrag.appendChild(wrapper);
 		document.querySelector(this.selector).appendChild(docFrag);
 		
+	};
+
+	Switcheroo.prototype.createSwitcherooUser = function(user, wrapper) {
+		let c = this.options.blockClass;
+		let list = document.createElement("li");
+
+		list.classList.add(c + '__squircle');
+		list.dataset.id = user.id;
+		list.classList.toggle('active', (user.id == monomer.user().id()));
+		/* draggable */
+		if (this.options.enableReorder) {
+			list.draggable = true;
+			list.addEventListener('dragstart', this.dragStart.bind(this));
+			list.addEventListener('dragover', this.dragOver.bind(this));
+			list.addEventListener('dragend', this.dragEnd.bind(this));
+		}
+		list.dataset.action = 'switcheroo';
+		
+
+		// create avatar
+		let avatar = document.createElement("div")
+		avatar.classList.add(c + '__avatar');
+		avatar.innerHTML = user.avatar.replace(/\\"/g, '"');
+		if (this.options.enableReorder) {
+			avatar.draggable = false;
+			avatar.querySelector('img').draggable = false;
+		}
+		list.appendChild(avatar);
+
+		// create popper
+		list.appendChild(this.createTooltip(user.username));
+
+		// create delete
+		let del = document.createElement('div');
+		del.classList.add(c + '__delete');
+		if (this.options.enableReorder) {
+			del.draggable = false;
+		}
+		del.innerHTML = this.options.deleteIcon;
+		list.appendChild(del);		
+
+		wrapper.appendChild(list);
+	};
+
+	Switcheroo.prototype.createLogoElement = function(wrapper) {
+		let c = this.options.blockClass;
+		let logo = document.createElement('a');
+		logo.classList.add(c + '__squircle', c + '__logo');
+		logo.href = '/';
+		logo.innerHTML = this.options.logo;
+		logo.appendChild(this.createTooltip('Accueil'));
+		wrapper.appendChild(logo);
+		this.createDividerLine(wrapper);
+	};
+
+	Switcheroo.prototype.createDividerLine = function(wrapper) {
+		const divider = document.createElement('li');
+		divider.classList.add(this.options.blockClass + '__divider');
+		wrapper.appendChild(divider);
+	};
+
+	Switcheroo.prototype.createCustomButtons = function(wrapper) {
+		const buttons = this.options.customButtons;
+		if (buttons > 0) {
+			/*
+			[{
+				tooltip: 'Titre en hover',
+				html: '',
+				before: true || null, 
+				action: 'http://link.com/' || function() {} -> event click
+			}]
+		 	*/
+		}
 	};
 
 	Switcheroo.prototype.createTooltip = function(tooltip) {
