@@ -297,15 +297,30 @@
 
 	Switcheroo.prototype.createCustomButtons = function(wrapper) {
 		const buttons = this.options.customButtons;
-		if (buttons > 0) {
-			/*
-			[{
-				tooltip: 'Titre en hover',
-				html: '',
-				before: true || null, 
-				action: 'http://link.com/' || function() {} -> event click
-			}]
-		 	*/
+		const c = this.options.blockClass;
+		if (buttons.length > 0) {
+			let orderIndex = 1;
+			buttons.forEach(el => {
+				if(!el) return;
+				let button;
+				if (monomer.isValidURL(el.action)) {
+					button = document.createElement('a');
+					button.href = el.action;
+				} else {
+					button = document.createElement('div');
+					if (typeof el.action === 'function') {
+						button.addEventListener('click', el.action);
+					}
+				}
+				if (typeof el.before === "boolean" && el.before) {
+					button.style.order = orderIndex;
+					orderIndex++;
+				}
+				button.classList.add(c + '__squircle', c + '__button');
+				button.innerHTML = el.html;
+				if(el.tooltip && typeof el.tooltip === "string") button.appendChild(this.createTooltip(el.tooltip));
+				wrapper.appendChild(button);
+			});
 		}
 	};
 
