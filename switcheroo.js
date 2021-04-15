@@ -5,7 +5,6 @@
 	function Switcheroo(selector = '#switcheroo', options = {}) {
 		this.selector = selector;
 		this.dragged = null;
-		this.dragIndex = [null, null];
 
 	  	var defaults = {
 	  		logo: '',
@@ -13,7 +12,6 @@
 	  		confirm: true,
 	  		explore: false,
 	  		refreshAvatar: true,
-	  		formAutocomplete: 'off',
 	  		blockClass: 'switcheroo',
 	  		exploreIcon: `more`,
 	  		deleteIcon: `×`,
@@ -318,7 +316,6 @@
 			name: 'form_login',
 			method: 'post',
 			action: '/login',
-			autocomplete: this.options.formAutocomplete,
 			onSubmit: (e) => {
 	          	e.preventDefault();
 	          	this.add(e.target);
@@ -337,8 +334,7 @@
 					id: c + '-username',
 					name: 'username',
 					required: true,
-					maxlength: '40',
-					autocomplete: this.options.formAutocomplete
+					maxlength: '40'
 				}),
 			),
 			VD.h('div', {
@@ -354,8 +350,7 @@
 					id: c + '-password',
 					name: 'password',
 					required: true,
-					maxlength: '32',
-					autocomplete: this.options.formAutocomplete
+					maxlength: '32'
 				})
 			),
 			VD.h('input', {
@@ -448,4 +443,4 @@
 	};
 
 	global.Switcheroo = Switcheroo;
-})(window);
+})(window);	
