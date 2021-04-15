@@ -4,11 +4,15 @@
 
 	function Switcheroo(selector = '#switcheroo', options = {}) {
 		this.selector = selector;
+		this.dragged = null;
+		this.dragIndex = [null, null];
 
 	  	var defaults = {
 	  		logo: '',
+	  		reorder: false,
 	  		confirm: true,
 	  		explore: false,
+	  		refreshAvatar: true,
 	  		formAutocomplete: 'off',
 	  		blockClass: 'switcheroo',
 	  		exploreIcon: `more`,
@@ -19,11 +23,7 @@
 	  		modal: {}
 	  	};
 
-		if(arguments[1] && typeof arguments[1] == "object") {
-			this.options = Object.assign({}, defaults, options);
-		} else {
-			this.options = defaults;
-		}
+		this.options = Object.assign({}, defaults, options);
 
 		this.createFormModal(this.options.modal);
 
@@ -55,6 +55,13 @@
   			}
   		});
 
+  		if(t.options.refreshAvatar) {
+	  		document.delegateEventListener('contextmenu', '[data-action="switcheroo"].active', function(e) {
+	  			t.refreshAvatar(this, e);
+	  			t.updateRecord();
+	  		});
+	  	}
+
   		document.delegateEventListener('click', '[data-action="switcheroo"]:not(.active)', function(e) {
   			if(!t.isCloseButton(e)){
   				if(t.options.confirm) {
@@ -70,57 +77,40 @@
 
 	};
 
-	Switcheroo.prototype.add = function(form) {
+	Switcheroo.prototype.isUserLoggedIn = function() {
+		return monomer.user().logged();
+	};
+
+	Switcheroo.prototype.add = async function(form) {
 		let fields = monomer.getFormData(form);
 		let credentials = (({ username, password }) => ({ username, password: monomer.cipher(password) }))(fields);
 
-		if(!monomer.user().logged()) {
+		/* new async/await way */
+		if (this.isUserLoggedIn()) await this.logout();
 
-			this.login(credentials, (data) => {
-				credentials = Object.assign({}, credentials, this.updateCredentials(data));
-				this.update(credentials);
-				monomer.reload();
-			}, () => {
-				this.errorAlert();
-			});
-
-		} else {
-
-			this.logout(() => {
-				this.login(credentials, (data) => {
-					credentials = Object.assign({}, credentials, this.updateCredentials(data));
-					this.update(credentials);
-					monomer.reload();
-				}, () => {
-					this.errorAlert();
-				});
-			});
-
-		}
+		await this.login(credentials, (data) => {
+			credentials = Object.assign({}, credentials, this.updateCredentials(data));
+			this.update(credentials);
+			monomer.reload();
+		}, () => {
+			this.errorAlert();
+		});
+		/* end */
 	}
 
-	Switcheroo.prototype.switch = function(user) {
+	Switcheroo.prototype.switch = async function(user) {
 		let id = user.dataset.id;
 		let switcheroo = this.findSwitcheroo(id);
-		if(!monomer.user().logged()) {
-			if(switcheroo) {
-				this.login(switcheroo, monomer.reload, () => {
-					this.errorAlert();
-				});
-			}
-		} else {
-			if(switcheroo) {
-				this.logout(() => {
-					this.login(switcheroo, monomer.reload, () => {
-						this.errorAlert();
-					});
-				});
-			}
-		}
+		if(!switcheroo) return this.errorAlert();
+
+		if (this.isUserLoggedIn()) await this.logout();
+		await this.login(switcheroo, monomer.reload, () => {
+			this.errorAlert();
+		});
 	}
 
 	Switcheroo.prototype.login = function(credentials, success, error) {
-		monomer.login(credentials['username'], monomer.decipher(credentials['password']))
+		return monomer.login(credentials['username'], monomer.decipher(credentials['password']))
 		.then(res => {
 			this.statusCallbacks(res, success, error);
 		});
@@ -128,9 +118,7 @@
 
 	Switcheroo.prototype.logout = function(success, error) {
 		let t = this;
-		monomer.logout().then(res => {
-			this.statusCallbacks(res, success, error);
-		});
+		return monomer.logout();
 	};
 
 	Switcheroo.prototype.statusCallbacks = function(res, success, error) {
@@ -177,14 +165,26 @@
 	  	});
 	};
 
+	Switcheroo.prototype.refreshAvatar = function(user, e) {
+		e.preventDefault();
+		let user_id = user.dataset.id;
+		let toUpdate = this.findSwitcheroo(user_id);
+		toUpdate['avatar'] = monomer.user().avatar();
+	};
+
+	Switcheroo.prototype.updateRecord = function(id) {
+		this.updateStorage();
+		monomer.reload();
+	};
+
 	Switcheroo.prototype.deleteRecord = function(id) {
 		this.deleteSwitcheroo(id);
 		this.updateStorage();
 		monomer.reload();
 	};
 
-	Switcheroo.prototype.updateStorage = function() {
-		localStorage.setItem('switcheroo', JSON.stringify(this.switcherooCredentials));
+	Switcheroo.prototype.updateStorage = function(obj) {
+		localStorage.setItem('switcheroo', JSON.stringify(obj || this.switcherooCredentials));
 	};
 
 	Switcheroo.prototype.isCloseButton = function(e) {
@@ -235,14 +235,26 @@
 			// create list item
 			let list = document.createElement("li");
 			list.classList.add(c + '__squircle');
-			list.dataset.action = 'switcheroo';
 			list.dataset.id = el.id;
 			list.classList.toggle('active', (el.id == monomer.user().id()));
+			/* draggable */
+			if (this.options.reorder) {
+				list.draggable = true;
+				list.addEventListener('dragstart', this.dragStart.bind(this));
+				list.addEventListener('dragover', this.dragOver.bind(this));
+				list.addEventListener('dragend', this.dragEnd.bind(this));
+			}
+			list.dataset.action = 'switcheroo';
+			
 
 			// create avatar
 			let avatar = document.createElement("div")
 			avatar.classList.add(c + '__avatar');
 			avatar.innerHTML = el.avatar.replace(/\\"/g, '"');
+			if (this.options.reorder) {
+				avatar.draggable = false;
+				avatar.querySelector('img').draggable = false;
+			}
 			list.appendChild(avatar);
 
 			// create popper
@@ -251,6 +263,9 @@
 			// create delete
 			let del = document.createElement('div');
 			del.classList.add(c + '__delete');
+			if (this.options.reorder) {
+				del.draggable = false;
+			}
 			del.innerHTML = this.options.deleteIcon;
 			list.appendChild(del);		
 
@@ -367,5 +382,70 @@
 	  	});
 	};
 
+	Switcheroo.prototype.isBefore = function(el1, el2) {
+		let cur
+  		if (el2.parentNode === el1.parentNode) {
+    		for (cur = el1.previousSibling; cur; cur = cur.previousSibling) {
+	      		if (cur === el2) return true
+			}
+  		}
+  		return false;
+	};
+
+	Switcheroo.prototype.dragStart = function(e) {
+		let target = e.target;
+		target.closest('.' + this.options.blockClass).classList.add('dragged');
+		e.stopPropagation();
+		e.dataTransfer.effectAllowed = 'move';
+		e.dataTransfer.setData('text/html', this.innerHTML);
+		this.draggable = target;
+	};
+
+	Switcheroo.prototype.dragOver = function(e) {
+		e.stopPropagation();
+		let target = e.target.closest('li');
+		if(this.isBefore(this.draggable, target)) {
+			this.insertDraggedBefore(this.draggable, target);
+		} else {
+			this.insertDraggedBefore(this.draggable, target.nextSibling);
+		}
+	};
+
+	Switcheroo.prototype.insertDraggedBefore = function(el1, el2) {
+		el2.parentNode.insertBefore(el1, el2);
+	};
+
+	Switcheroo.prototype.dragEnd = function(e) {
+		e.stopPropagation();
+		e.target.closest('.' + this.options.blockClass).classList.remove('dragged');
+		this.draggable = null;
+		this.sortSwitcheroo();
+	};
+
+	Switcheroo.prototype.sortSwitcheroo = function() {
+		let els = document.querySelectorAll('#switcheroo [data-id]');
+		/* get new order */
+		let newOrder = [];
+		els.forEach(el => {
+			newOrder.push(el.dataset.id);
+		});
+
+
+		let result = [];
+		newOrder.forEach((key) => {
+			/* go through each id added in new order */
+		    var found = false;
+		    this.switcherooCredentials.filter(function(item) {
+		        if(!found && item.id == key) {
+		            result.push(item);
+		            found = true;
+		            return false;
+		        }
+		        return true;
+		    })
+		});
+		this.updateStorage(result);
+	};
+
 	global.Switcheroo = Switcheroo;
-})(window);	
+})(window);
