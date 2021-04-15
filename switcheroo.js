@@ -309,7 +309,9 @@
 				} else {
 					button = document.createElement('div');
 					if (typeof el.action === 'function') {
-						button.addEventListener('click', el.action.bind(this, 'text'));
+						button.addEventListener('click', function(e) {
+							el.action.call(t, e, this);
+						});
 					}
 				}
 				if (typeof el.before === "boolean" && el.before) {
