@@ -8,9 +8,10 @@
 
 	  	var defaults = {
 	  		logo: '',
-	  		reorder: false,
+	  		enableReorder: false,
 	  		confirm: true,
 	  		refreshAvatar: true,
+	  		customButtons: [],
 	  		blockClass: 'switcheroo',
 	  		deleteIcon: `×`,
 	  		addIcon: `+`,
@@ -234,7 +235,7 @@
 			list.dataset.id = el.id;
 			list.classList.toggle('active', (el.id == monomer.user().id()));
 			/* draggable */
-			if (this.options.reorder) {
+			if (this.options.enableReorder) {
 				list.draggable = true;
 				list.addEventListener('dragstart', this.dragStart.bind(this));
 				list.addEventListener('dragover', this.dragOver.bind(this));
@@ -247,7 +248,7 @@
 			let avatar = document.createElement("div")
 			avatar.classList.add(c + '__avatar');
 			avatar.innerHTML = el.avatar.replace(/\\"/g, '"');
-			if (this.options.reorder) {
+			if (this.options.enableReorder) {
 				avatar.draggable = false;
 				avatar.querySelector('img').draggable = false;
 			}
@@ -259,7 +260,7 @@
 			// create delete
 			let del = document.createElement('div');
 			del.classList.add(c + '__delete');
-			if (this.options.reorder) {
+			if (this.options.enableReorder) {
 				del.draggable = false;
 			}
 			del.innerHTML = this.options.deleteIcon;
