@@ -309,12 +309,11 @@
 				} else {
 					button = document.createElement('div');
 					if (typeof el.action === 'function') {
-						button.addEventListener('click', el.action);
+						button.addEventListener('click', el.action.bind(this, 'text'));
 					}
 				}
 				if (typeof el.before === "boolean" && el.before) {
-					button.style.order = orderIndex;
-					orderIndex++;
+					button.style.order = "-1";
 				}
 				button.classList.add(c + '__squircle', c + '__button');
 				button.innerHTML = el.html;
