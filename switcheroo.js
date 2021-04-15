@@ -10,10 +10,8 @@
 	  		logo: '',
 	  		reorder: false,
 	  		confirm: true,
-	  		explore: false,
 	  		refreshAvatar: true,
 	  		blockClass: 'switcheroo',
-	  		exploreIcon: `more`,
 	  		deleteIcon: `×`,
 	  		addIcon: `+`,
 	  		errorMsg: 'Une erreur est surviendue lors du Switcheroo.',
@@ -278,15 +276,6 @@
 		login.innerHTML = this.options.addIcon;
 		login.appendChild(this.createTooltip('Associer un personnage'))
 		wrapper.appendChild(login);
-
-		if (this.options.explore) {
-			const explore = document.createElement('a');
-			explore.classList.add(c + '__squircle', c + '__squircle--button');
-			explore.href = '/memberlist';
-			explore.innerHTML = this.options.exploreIcon;
-			explore.appendChild(this.createTooltip('Explorer les personnages'));
-			wrapper.appendChild(explore);
-		}
 
 		docFrag.appendChild(wrapper);
 		document.querySelector(this.selector).appendChild(docFrag);
