@@ -11,7 +11,7 @@
             logo: '',
             enableReorder: false,
             confirm: true,
-            refreshAvatar: true,
+            updateAvatar: true,
             customButtons: [],
             blockClass: 'switcheroo',
             deleteIcon: `×`,
@@ -54,10 +54,9 @@
             }
         });
 
-        if(t.options.refreshAvatar) {
+        if(t.options.updateAvatar) {
             document.delegateEventListener('contextmenu', '[data-action="switcheroo"].active', function(e) {
-                t.refreshAvatar(this, e);
-                t.updateRecord();
+                t.updateAvatar(this, e);
             });
         }
 
@@ -164,14 +163,16 @@
         });
     };
 
-    Switcheroo.prototype.refreshAvatar = function(user, e) {
+    Switcheroo.prototype.updateAvatar = function(user, e) {
         e.preventDefault();
         let user_id = user.dataset.id;
         let toUpdate = this.findSwitcheroo(user_id);
-        toUpdate['avatar'] = monomer.user().avatar();
+        let currentAvatar = monomer.user().avatar();
+        if(toUpdate['avatar'] != currentAvatar) toUpdate['avatar'] = currentAvatar;
+        this.updateRecord();
     };
 
-    Switcheroo.prototype.updateRecord = function(id) {
+    Switcheroo.prototype.updateRecord = function() {
         this.updateStorage();
         monomer.reload();
     };
