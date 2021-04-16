@@ -3,7 +3,7 @@
     global.monomer = global.monomer || new MONOMER();
 
     function Switcheroo(selector = '#switcheroo', options = {}) {
-        this.selector = selector;
+        this.component = document.querySelector(selector);
         this.dragged = null;
 
         var defaults = {
@@ -232,7 +232,7 @@
         this.createCustomButtons(wrapper);
 
         docFrag.appendChild(wrapper);
-        document.querySelector(this.selector).appendChild(docFrag);
+        this.component.appendChild(docFrag);
         
     };
 
