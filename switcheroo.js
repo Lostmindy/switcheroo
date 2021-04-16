@@ -300,6 +300,7 @@
     };
 
     Switcheroo.prototype.createCustomButtons = function(wrapper) {
+        const t = this;
         const buttons = this.options.customButtons;
         const c = this.options.blockClass;
         if (buttons.length > 0) {
