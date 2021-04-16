@@ -309,8 +309,7 @@
                 if (monomer.isValidURL(el.action)) {
                     button = document.createElement('a');
                     button.href = el.action;
-                }
-                if (typeof el.action === 'function') {
+                } else if (typeof el.action === 'function') {
                     button = document.createElement('div');
                     button.addEventListener('click', function(e) {
                         el.action.call(t, e, this);
