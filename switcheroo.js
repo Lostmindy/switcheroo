@@ -42,6 +42,7 @@
 
     Switcheroo.prototype.bindEvents = function() {
         let t = this;
+
         document.delegateEventListener('click', '[data-action="open-login"]', e => {
             this.loginModal.open();
         });
@@ -206,6 +207,7 @@
 
     Switcheroo.prototype.buildSwitcheroo = function() {
         var c = this.options.blockClass;
+        this.component.style.userSelect = 'none';
         this.switcherooCredentials = JSON.parse(localStorage.getItem('switcheroo'));
 
         let docFrag = document.createDocumentFragment();
@@ -326,14 +328,22 @@
         let c = this.options.blockClass;
         // create popper
         let popper = document.createElement("div");
+        if (this.options.enableReorder) {
+            popper.draggable = false;
+        }
         popper.classList.add(c + '__popper');
         // create popper text
         let textNode = document.createElement("div");
         textNode.classList.add(c + '__popper-text');
+        if (this.options.enableReorder) {
+            textNode.draggable = false;
+        }
         textNode.innerHTML = tooltip;
         popper.appendChild(textNode);
         return popper;
-    }
+    };
+
+    proto
 
     Switcheroo.prototype.createFormModal = function(options) {
         let t = this;
