@@ -306,7 +306,8 @@
             buttons.forEach(el => {
                 if(!el) return;
                 let button;
-                if (monomer.isValidURL(el.action)) {
+                const isValidLink = (monomer.isValidURL(el.action) || (typeof el.action === 'string' && el.action.indexOf('/') === 0));
+                if (isValidLink) {
                     button = document.createElement('a');
                     button.href = el.action;
                 } else if (typeof el.action === 'function') {
