@@ -343,8 +343,6 @@
         return popper;
     };
 
-    
-
     Switcheroo.prototype.createFormModal = function(options) {
         let t = this;
         const form = document.createDocumentFragment();
