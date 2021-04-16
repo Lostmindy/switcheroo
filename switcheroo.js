@@ -343,7 +343,7 @@
         return popper;
     };
 
-    proto
+    
 
     Switcheroo.prototype.createFormModal = function(options) {
         let t = this;
