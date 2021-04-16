@@ -1,4 +1,5 @@
 (function(global) {
+    'use strict';
 
     global.monomer = global.monomer || new MONOMER();
 
