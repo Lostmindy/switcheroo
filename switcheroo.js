@@ -418,31 +418,31 @@
     };
 
     Switcheroo.prototype.isBefore = function(el1, el2) {
-        let cur
+        let cur;
         if (el2.parentNode === el1.parentNode) {
             for (cur = el1.previousSibling; cur; cur = cur.previousSibling) {
-                if (cur === el2) return true
+                if (cur === el2) return true;
             }
         }
         return false;
     };
 
     Switcheroo.prototype.dragStart = function(e) {
+        e.stopPropagation();
         let target = e.target;
         target.closest('.' + this.options.blockClass).classList.add('dragged');
-        e.stopPropagation();
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/html', this.innerHTML);
-        this.draggable = target;
+        this.draggedElement = target;
     };
 
     Switcheroo.prototype.dragOver = function(e) {
         e.stopPropagation();
         let target = e.target.closest('li');
-        if(this.isBefore(this.draggable, target)) {
-            this.insertDraggedBefore(this.draggable, target);
+        if(this.isBefore(this.draggedElement, target)) {
+            this.insertDraggedBefore(this.draggedElement, target);
         } else {
-            this.insertDraggedBefore(this.draggable, target.nextSibling);
+            this.insertDraggedBefore(this.draggedElement, target.nextSibling);
         }
     };
 
@@ -453,7 +453,7 @@
     Switcheroo.prototype.dragEnd = function(e) {
         e.stopPropagation();
         e.target.closest('.' + this.options.blockClass).classList.remove('dragged');
-        this.draggable = null;
+        this.draggedElement = null;
         this.sortSwitcheroo();
     };
 
