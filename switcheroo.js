@@ -5,7 +5,13 @@
 
     function Switcheroo(selector = '#switcheroo', options = {}) {
         this.component = document.querySelector(selector);
-        this.dragged = null;
+        
+        Object.defineProperty(this, "dragged", {
+            get: () => dragged,
+            set: (new_value) => {
+                dragged = new_value
+            }
+        });
 
         var defaults = {
             logo: '',
