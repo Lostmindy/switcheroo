@@ -306,7 +306,7 @@
 					button = document.createElement('a');
 					button.href = el.action;
 				}
-				if (!typeof el.action === 'function') {
+				if (typeof el.action === 'function') {
 					button = document.createElement('div');
 					button.addEventListener('click', function(e) {
 						el.action.call(t, e, this);
