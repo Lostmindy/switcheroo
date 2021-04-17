@@ -318,6 +318,7 @@
                     });
                 }
                 if(!button) return false;
+                if(Array.isArray(el.classes)) button.classList.add(...el.classes);
                 if (typeof el.before === "boolean" && el.before) button.style.order = "-1";
                 button.classList.add(c + '__squircle', c + '__button');
                 button.innerHTML = el.html;
