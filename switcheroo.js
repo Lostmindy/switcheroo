@@ -1,371 +1,486 @@
 (function(global) {
+    'use strict';
 
-	global.monomer = global.monomer || new MONOMER();
+    global.monomer = global.monomer || new MONOMER();
 
-	function Switcheroo(selector = '#switcheroo', options = {}) {
-		this.selector = selector;
+    function Switcheroo(selector = '#switcheroo', options = {}) {
+        this.component = document.querySelector(selector);
 
-	  	var defaults = {
-	  		logo: '',
-	  		confirm: true,
-	  		explore: false,
-	  		formAutocomplete: 'off',
-	  		blockClass: 'switcheroo',
-	  		exploreIcon: `more`,
-	  		deleteIcon: `×`,
-	  		addIcon: `+`,
-	  		errorMsg: 'Une erreur est surviendue lors du Switcheroo.',
-	  		confirmMsg: 'Confirmer le Switcheroo de personnage ?',
-	  		modal: {}
-	  	};
+        var defaults = {
+            logo: '',
+            enableReorder: true,
+            confirm: true,
+            updateAvatar: true,
+            customButtons: [],
+            blockClass: 'switcheroo',
+            deleteIcon: `×`,
+            addIcon: `+`,
+            errorMsg: 'Une erreur est surviendue lors du Switcheroo.',
+            confirmMsg: 'Confirmer le Switcheroo de personnage ?',
+            modal: {}
+        };
 
-		if(arguments[1] && typeof arguments[1] == "object") {
-			this.options = Object.assign({}, defaults, options);
-		} else {
-			this.options = defaults;
-		}
+        this.options = Object.assign({}, defaults, options);
 
-		this.createFormModal(this.options.modal);
+        this.createFormModal(this.options.modal);
 
-		this.elements = {
-			loginButton: document.querySelector('[data-action="open-login"]'),
-			loginFormID: 'fa-login-form',
-			classPrefix: '.' + this.options.blockClass,
-			deleteButtonClass: '.' + this.options.blockClass + '__delete'
-		};
+        this.elements = {
+            loginButton: document.querySelector('[data-action="open-login"]'),
+            loginFormID: 'fa-login-form',
+            classPrefix: '.' + this.options.blockClass,
+            deleteButtonClass: '.' + this.options.blockClass + '__delete'
+        };
 
-		if (!localStorage.hasOwnProperty('switcheroo')) {
-			localStorage.setItem('switcheroo', "[]");
-		}
+        if (!localStorage.hasOwnProperty('switcheroo')) {
+            localStorage.setItem('switcheroo', "[]");
+        }
 
-		this.buildSwitcheroo();
+        this.buildSwitcheroo();
 
-		this.bindEvents();
-	}
+        this.bindEvents();
+    }
 
-	Switcheroo.prototype.bindEvents = function() {
-		let t = this;
-  		document.delegateEventListener('click', '[data-action="open-login"]', e => {
-  			this.loginModal.open();
-  		});
+    Switcheroo.prototype.bindEvents = function() {
+        let t = this;
 
-  		document.delegateEventListener('click', '[data-action="switcheroo"]', function(e) {
-  			if(t.isCloseButton(e)) {
-  				t.deleteRecord(this.dataset.id);
-  			}
-  		});
+        document.delegateEventListener('click', '[data-action="open-login"]', e => {
+            this.loginModal.open();
+        });
 
-  		document.delegateEventListener('click', '[data-action="switcheroo"]:not(.active)', function(e) {
-  			if(!t.isCloseButton(e)){
-  				if(t.options.confirm) {
-	  				var r = confirm(t.options.confirmMsg);
-					if (r == true) {
-				  		t.switch(this);
-					}
-				} else {
-					t.switch(this);
-				}
-			}
-  		});
+        document.delegateEventListener('click', '[data-action="switcheroo"]', function(e) {
+            if(t.isCloseButton(e)) {
+                t.deleteRecord(this.dataset.id);
+            }
+        });
 
-	};
+        if(t.options.updateAvatar) {
+            document.delegateEventListener('contextmenu', '[data-action="switcheroo"].active', function(e) {
+                t.updateAvatar(this, e);
+            });
+        }
 
-	Switcheroo.prototype.add = function(form) {
-		let fields = monomer.getFormData(form);
-		let credentials = (({ username, password }) => ({ username, password: monomer.cipher(password) }))(fields);
+        document.delegateEventListener('click', '[data-action="switcheroo"]:not(.active)', function(e) {
+            if(!t.isCloseButton(e)){
+                if(t.options.confirm) {
+                    var r = confirm(t.options.confirmMsg);
+                    if (r == true) {
+                        t.switch(this);
+                    }
+                } else {
+                    t.switch(this);
+                }
+            }
+        });
 
-		if(!monomer.user().logged()) {
+    };
 
-			this.login(credentials, (data) => {
-				credentials = Object.assign({}, credentials, this.updateCredentials(data));
-				this.update(credentials);
-				monomer.reload();
-			}, () => {
-				this.errorAlert();
-			});
+    Switcheroo.prototype.isUserLoggedIn = function() {
+        return monomer.user().logged();
+    };
 
-		} else {
+    Switcheroo.prototype.add = async function(form) {
+        let fields = monomer.getFormData(form);
+        let credentials = (({ username, password }) => ({ username, password: monomer.cipher(password) }))(fields);
 
-			this.logout(() => {
-				this.login(credentials, (data) => {
-					credentials = Object.assign({}, credentials, this.updateCredentials(data));
-					this.update(credentials);
-					monomer.reload();
-				}, () => {
-					this.errorAlert();
-				});
-			});
+        /* new async/await way */
+        if (this.isUserLoggedIn()) await this.logout();
 
-		}
-	}
+        await this.login(credentials, (data) => {
+            credentials = Object.assign({}, credentials, this.updateCredentials(data));
+            this.update(credentials);
+            monomer.reload();
+        }, () => {
+            this.errorAlert();
+        });
+        /* end */
+    }
 
-	Switcheroo.prototype.switch = function(user) {
-		let id = user.dataset.id;
-		let switcheroo = this.findSwitcheroo(id);
-		if(!monomer.user().logged()) {
-			if(switcheroo) {
-				this.login(switcheroo, monomer.reload, () => {
-					this.errorAlert();
-				});
-			}
-		} else {
-			if(switcheroo) {
-				this.logout(() => {
-					this.login(switcheroo, monomer.reload, () => {
-						this.errorAlert();
-					});
-				});
-			}
-		}
-	}
+    Switcheroo.prototype.switch = async function(user) {
+        let id = user.dataset.id;
+        let switcheroo = this.findSwitcheroo(id);
+        if(!switcheroo) return this.errorAlert();
 
-	Switcheroo.prototype.login = function(credentials, success, error) {
-		monomer.login(credentials['username'], monomer.decipher(credentials['password']))
-		.then(res => {
-			this.statusCallbacks(res, success, error);
-		});
-	};
+        if (this.isUserLoggedIn()) await this.logout();
+        await this.login(switcheroo, monomer.reload, () => {
+            this.errorAlert();
+        });
+    }
 
-	Switcheroo.prototype.logout = function(success, error) {
-		let t = this;
-		monomer.logout().then(res => {
-			this.statusCallbacks(res, success, error);
-		});
-	};
+    Switcheroo.prototype.login = function(credentials, success, error) {
+        return monomer.login(credentials['username'], monomer.decipher(credentials['password']))
+        .then(res => {
+            this.statusCallbacks(res, success, error);
+        });
+    };
 
-	Switcheroo.prototype.statusCallbacks = function(res, success, error) {
-		if(res.status) {
-			if(success) success(res.data);
-		} else {
-			if (error) error(res.data);
-		}
-	};
+    Switcheroo.prototype.logout = function(success, error) {
+        let t = this;
+        return monomer.logout();
+    };
 
-	Switcheroo.prototype.errorAlert = function() {
-		alert(this.options.errorMsg);
-	};
+    Switcheroo.prototype.statusCallbacks = function(res, success, error) {
+        if(res.status) {
+            if(success) success(res.data);
+        } else {
+            if (error) error(res.data);
+        }
+    };
 
-	Switcheroo.prototype.update = function(credentials) {
-		if(!this.credentialsExists(credentials['id'])) {
-			this.switcherooCredentials.push(credentials);
-			this.updateStorage();
-		}
-	};
+    Switcheroo.prototype.errorAlert = function() {
+        alert(this.options.errorMsg);
+    };
 
-	Switcheroo.prototype.findSwitcheroo = function(id) {
-		return this.switcherooCredentials.find(x => x.id === id);
-	}
+    Switcheroo.prototype.update = function(credentials) {
+        if(!this.credentialsExists(credentials['id'])) {
+            this.switcherooCredentials.push(credentials);
+            this.updateStorage();
+        }
+    };
 
-	Switcheroo.prototype.deleteSwitcheroo = function(id) {
-		this.switcherooCredentials = this.switcherooCredentials.filter(function(obj) {
-	  		return obj.id !== id;
-		});
-	};
+    Switcheroo.prototype.findSwitcheroo = function(id) {
+        return this.switcherooCredentials.find(x => x.id === id);
+    }
 
-	Switcheroo.prototype.updateCredentials = function(data) {
-		// make sure everything is formatted for localstorage
-		return {
-			id: this.catchID(data),
-			avatar: this.catchAvatar(data),
-			username: this.catchUsername(data)
-		}
-	};
+    Switcheroo.prototype.deleteSwitcheroo = function(id) {
+        this.switcherooCredentials = this.switcherooCredentials.filter(function(obj) {
+            return obj.id !== id;
+        });
+    };
 
-	Switcheroo.prototype.credentialsExists = function(id) {
-		return this.switcherooCredentials.some(function(el) {
-		    return el.id === id;
-	  	});
-	};
+    Switcheroo.prototype.updateCredentials = function(data) {
+        // make sure everything is formatted for localstorage
+        return {
+            id: this.catchID(data),
+            avatar: this.catchAvatar(data),
+            username: this.catchUsername(data)
+        }
+    };
 
-	Switcheroo.prototype.deleteRecord = function(id) {
-		this.deleteSwitcheroo(id);
-		this.updateStorage();
-		monomer.reload();
-	};
+    Switcheroo.prototype.credentialsExists = function(id) {
+        return this.switcherooCredentials.some(function(el) {
+            return el.id === id;
+        });
+    };
 
-	Switcheroo.prototype.updateStorage = function() {
-		localStorage.setItem('switcheroo', JSON.stringify(this.switcherooCredentials));
-	};
+    Switcheroo.prototype.updateAvatar = function(user, e) {
+        e.preventDefault();
+        let user_id = user.dataset.id;
+        let toUpdate = this.findSwitcheroo(user_id);
+        let currentAvatar = monomer.user().avatar();
+        if(toUpdate['avatar'] == currentAvatar) return;
+        toUpdate['avatar'] = currentAvatar;
+        this.updateRecord();
+    };
 
-	Switcheroo.prototype.isCloseButton = function(e) {
-		var el = e.target;
-		return el.matches(this.elements.deleteButtonClass);
-	};
+    Switcheroo.prototype.updateRecord = function() {
+        this.updateStorage();
+        monomer.reload();
+    };
 
-	Switcheroo.prototype.catchAvatar = function(data) {
-		let pattern = new RegExp(/_userdata\["avatar"\] = "(.+)";/, "gm");
-		return pattern.exec(data)[1];
-	}
+    Switcheroo.prototype.deleteRecord = function(id) {
+        this.deleteSwitcheroo(id);
+        this.updateStorage();
+        monomer.reload();
+    };
 
-	Switcheroo.prototype.catchID = function(data) {
-		let pattern = new RegExp(/_userdata\["user_id"\] = (\d+);/, "gm");
-		return pattern.exec(data)[1];
-	};
+    Switcheroo.prototype.updateStorage = function(obj) {
+        localStorage.setItem('switcheroo', JSON.stringify(obj || this.switcherooCredentials));
+    };
 
-	Switcheroo.prototype.catchUsername = function(data) {
-		let pattern = new RegExp(/_userdata\["username"\] = "(.+)";/, "gm");
-		return pattern.exec(data)[1];
-	};
+    Switcheroo.prototype.isCloseButton = function(e) {
+        var el = e.target;
+        return el.matches(this.elements.deleteButtonClass);
+    };
 
-	Switcheroo.prototype.buildSwitcheroo = function() {
-		var c = this.options.blockClass;
-		this.switcherooCredentials = JSON.parse(localStorage.getItem('switcheroo'));
+    Switcheroo.prototype.catchAvatar = function(data) {
+        let pattern = new RegExp(/_userdata\["avatar"\] = "(.+)";/, "gm");
+        return pattern.exec(data)[1];
+    }
 
-		let docFrag = document.createDocumentFragment();
+    Switcheroo.prototype.catchID = function(data) {
+        let pattern = new RegExp(/_userdata\["user_id"\] = (\d+);/, "gm");
+        return pattern.exec(data)[1];
+    };
 
-		// wrapper
-		let wrapper = document.createElement('ul');
-		wrapper.classList.add(c + '__squircles');
+    Switcheroo.prototype.catchUsername = function(data) {
+        let pattern = new RegExp(/_userdata\["username"\] = "(.+)";/, "gm");
+        return pattern.exec(data)[1];
+    };
 
-		const divider = document.createElement('li');
-		divider.classList.add(c + '__divider');
+    Switcheroo.prototype.buildSwitcheroo = function() {
+        var c = this.options.blockClass;
+        this.component.style.userSelect = 'none';
+        this.switcherooCredentials = JSON.parse(localStorage.getItem('switcheroo'));
 
-		// if logo given
-		if (this.options.logo) {
-			let logo = document.createElement('a');
-			logo.classList.add(c + '__squircle', c + '__logo');
-			logo.href = '/';
-			logo.innerHTML = this.options.logo;
-			logo.appendChild(this.createTooltip('Accueil'));
-			wrapper.appendChild(logo);
-			wrapper.appendChild(divider);
-		}
-		
-		this.switcherooCredentials.forEach(el => {
-			// create list item
-			let list = document.createElement("li");
-			list.classList.add(c + '__squircle');
-			list.dataset.action = 'switcheroo';
-			list.dataset.id = el.id;
-			list.classList.toggle('active', (el.id == monomer.user().id()));
+        let docFrag = document.createDocumentFragment();
 
-			// create avatar
-			let avatar = document.createElement("div")
-			avatar.classList.add(c + '__avatar');
-			avatar.innerHTML = el.avatar.replace(/\\"/g, '"');
-			list.appendChild(avatar);
+        let wrapper = document.createElement('ul');
+        wrapper.classList.add(c + '__squircles');
 
-			// create popper
-			list.appendChild(this.createTooltip(el.username));
+        if (this.options.logo) {
+            this.createLogoElement(wrapper);
+        }
+        
+        this.switcherooCredentials.forEach(el => {
+            this.createSwitcherooUser(el, wrapper);
+        });
 
-			// create delete
-			let del = document.createElement('div');
-			del.classList.add(c + '__delete');
-			del.innerHTML = this.options.deleteIcon;
-			list.appendChild(del);		
+        /* options */
+        const login = document.createElement('li');
+        login.classList.add(c + '__squircle', c + '__squircle--button');
+        login.dataset.action = 'open-login';
+        login.innerHTML = this.options.addIcon;
+        login.appendChild(this.createTooltip('Associer un personnage'))
+        wrapper.appendChild(login);
 
-			wrapper.appendChild(list);
-			
-		});
+        this.createCustomButtons(wrapper);
 
-		/* options */
-		const login = document.createElement('li');
-		login.classList.add(c + '__squircle', c + '__squircle--button');
-		login.dataset.action = 'open-login';
-		login.innerHTML = this.options.addIcon;
-		login.appendChild(this.createTooltip('Associer un personnage'))
-		wrapper.appendChild(login);
+        docFrag.appendChild(wrapper);
+        this.component.appendChild(docFrag);
+        
+    };
 
-		if (this.options.explore) {
-			const explore = document.createElement('a');
-			explore.classList.add(c + '__squircle', c + '__squircle--button');
-			explore.href = '/memberlist';
-			explore.innerHTML = this.options.exploreIcon;
-			explore.appendChild(this.createTooltip('Explorer les personnages'));
-			wrapper.appendChild(explore);
-		}
+    Switcheroo.prototype.createSwitcherooUser = function(user, wrapper) {
+        let c = this.options.blockClass;
+        let list = document.createElement("li");
 
-		docFrag.appendChild(wrapper);
-		document.querySelector(this.selector).appendChild(docFrag);
-		
-	};
+        list.classList.add(c + '__squircle');
+        list.dataset.id = user.id;
+        list.classList.toggle('active', (user.id == monomer.user().id()));
+        /* draggable */
+        if (this.options.enableReorder) {
+            list.draggable = true;
+            list.addEventListener('dragstart', this.dragStart.bind(this));
+            list.addEventListener('dragover', this.dragOver.bind(this));
+            list.addEventListener('dragend', this.dragEnd.bind(this));
+        }
+        list.dataset.action = 'switcheroo';
+        
 
-	Switcheroo.prototype.createTooltip = function(tooltip) {
-		let c = this.options.blockClass;
-		// create popper
-		let popper = document.createElement("div");
-		popper.classList.add(c + '__popper');
-		// create popper text
-		let textNode = document.createElement("div");
-		textNode.classList.add(c + '__popper-text');
-		textNode.innerHTML = tooltip;
-		popper.appendChild(textNode);
-		return popper;
-	}
+        // create avatar
+        let avatar = document.createElement("div")
+        avatar.classList.add(c + '__avatar');
+        avatar.innerHTML = user.avatar.replace(/\\"/g, '"');
+        if (this.options.enableReorder) {
+            avatar.draggable = false;
+            avatar.querySelector('img').draggable = false;
+        }
+        list.appendChild(avatar);
 
-	Switcheroo.prototype.createFormModal = function(options) {
-		let t = this;
-		const form = document.createDocumentFragment();
-		const c = 'switcheroo';
+        // create popper
+        list.appendChild(this.createTooltip(user.username));
 
-		const vdom = VD.h('form', { 
-			className: c + '__form', 
-			name: 'form_login',
-			method: 'post',
-			action: '/login',
-			autocomplete: this.options.formAutocomplete,
-			onSubmit: (e) => {
-	          	e.preventDefault();
-	          	this.add(e.target);
-			}
-		},
-			VD.h('div', {
-				className: c + '__form-row'
-			},
-				VD.h('label', {
-					for: c + '-username',
-					className: c + '__form-label'
-				}, "Nom d'utilisateur"),
-				VD.h('input', {
-					type: 'text',
-					className: c + '__form-input',
-					id: c + '-username',
-					name: 'username',
-					required: true,
-					maxlength: '40',
-					autocomplete: this.options.formAutocomplete
-				}),
-			),
-			VD.h('div', {
-				className: c + '__form-row'
-			},
-				VD.h('label', {
-					for: c + '-password',
-					className: c + '__form-label'
-				}, "Mot de passe"),
-				VD.h('input', {
-					className: c + '__form-input',
-					type: 'password',
-					id: c + '-password',
-					name: 'password',
-					required: true,
-					maxlength: '32',
-					autocomplete: this.options.formAutocomplete
-				})
-			),
-			VD.h('input', {
-				type: 'checkbox',
-				style: 'display: none;',
-				name: 'autologin',
-				checked: true
-			}),
-			VD.h('div', {
-				className: c + '__form-row'
-			},
-				VD.h('button', {
-					name: 'login',
-					className: c + '__form-button'
-				}, 'Connexion')
-			)
-		);
+        // create delete
+        let del = document.createElement('div');
+        del.classList.add(c + '__delete');
+        if (this.options.enableReorder) {
+            del.draggable = false;
+        }
+        del.innerHTML = this.options.deleteIcon;
+        list.appendChild(del);      
 
-		form.appendChild(VD.createElement(vdom));
+        wrapper.appendChild(list);
+    };
 
-		this.loginModal = monomer.modal({
-	  		content: VD.createElement(vdom),
-	  		maxWidth: 400
-	  	});
-	};
+    Switcheroo.prototype.createLogoElement = function(wrapper) {
+        let c = this.options.blockClass;
+        let logo = document.createElement('a');
+        logo.classList.add(c + '__squircle', c + '__logo');
+        logo.href = '/';
+        logo.innerHTML = this.options.logo;
+        logo.appendChild(this.createTooltip('Accueil'));
+        wrapper.appendChild(logo);
+        this.createDividerLine(wrapper);
+    };
 
-	global.Switcheroo = Switcheroo;
-})(window);	
+    Switcheroo.prototype.createDividerLine = function(wrapper) {
+        const divider = document.createElement('li');
+        divider.classList.add(this.options.blockClass + '__divider');
+        wrapper.appendChild(divider);
+    };
+
+    Switcheroo.prototype.createCustomButtons = function(wrapper) {
+        const t = this;
+        const buttons = this.options.customButtons;
+        const c = this.options.blockClass;
+        if (buttons.length > 0) {
+            buttons.forEach(el => {
+                if(!el) return;
+                let button;
+                const isValidLink = (monomer.isValidURL(el.action) || (typeof el.action === 'string' && el.action.indexOf('/') === 0));
+                if (isValidLink) {
+                    button = document.createElement('a');
+                    button.href = el.action;
+                } else if (typeof el.action === 'function') {
+                    button = document.createElement('div');
+                    button.addEventListener('click', function(e) {
+                        el.action.call(t, e, this);
+                    });
+                }
+                if(!button) return false;
+                if (typeof el.before === "boolean" && el.before) button.style.order = "-1";
+                button.classList.add(c + '__squircle', c + '__button');
+                button.innerHTML = el.html;
+                if(el.tooltip && typeof el.tooltip === "string") button.appendChild(this.createTooltip(el.tooltip));
+                wrapper.appendChild(button);
+            });
+        }
+    };
+
+    Switcheroo.prototype.createTooltip = function(tooltip) {
+        let c = this.options.blockClass;
+        // create popper
+        let popper = document.createElement("div");
+        if (this.options.enableReorder) {
+            popper.draggable = false;
+        }
+        popper.classList.add(c + '__popper');
+        // create popper text
+        let textNode = document.createElement("div");
+        textNode.classList.add(c + '__popper-text');
+        if (this.options.enableReorder) {
+            textNode.draggable = false;
+        }
+        textNode.innerHTML = tooltip;
+        popper.appendChild(textNode);
+        return popper;
+    };
+
+    Switcheroo.prototype.createFormModal = function(options) {
+        let t = this;
+        const form = document.createDocumentFragment();
+        const c = 'switcheroo';
+
+        const vdom = VD.h('form', { 
+            className: c + '__form', 
+            name: 'form_login',
+            method: 'post',
+            action: '/login',
+            onSubmit: (e) => {
+                e.preventDefault();
+                this.add(e.target);
+            }
+        },
+            VD.h('div', {
+                className: c + '__form-row'
+            },
+                VD.h('label', {
+                    for: c + '-username',
+                    className: c + '__form-label'
+                }, "Nom d'utilisateur"),
+                VD.h('input', {
+                    type: 'text',
+                    className: c + '__form-input',
+                    id: c + '-username',
+                    name: 'username',
+                    required: true,
+                    maxlength: '40'
+                }),
+            ),
+            VD.h('div', {
+                className: c + '__form-row'
+            },
+                VD.h('label', {
+                    for: c + '-password',
+                    className: c + '__form-label'
+                }, "Mot de passe"),
+                VD.h('input', {
+                    className: c + '__form-input',
+                    type: 'password',
+                    id: c + '-password',
+                    name: 'password',
+                    required: true,
+                    maxlength: '32'
+                })
+            ),
+            VD.h('input', {
+                type: 'checkbox',
+                style: 'display: none;',
+                name: 'autologin',
+                checked: true
+            }),
+            VD.h('div', {
+                className: c + '__form-row'
+            },
+                VD.h('button', {
+                    name: 'login',
+                    className: c + '__form-button'
+                }, 'Connexion')
+            )
+        );
+
+        form.appendChild(VD.createElement(vdom));
+
+        this.loginModal = monomer.modal({
+            content: VD.createElement(vdom),
+            maxWidth: 400
+        });
+    };
+
+    Switcheroo.prototype.isBefore = function(el1, el2) {
+        let cur;
+        if (el2.parentNode === el1.parentNode) {
+            for (cur = el1.previousSibling; cur; cur = cur.previousSibling) {
+                if (cur === el2) return true;
+            }
+        }
+        return false;
+    };
+
+    Switcheroo.prototype.dragStart = function(e) {
+        e.stopPropagation();
+        let target = e.target;
+        target.closest('.' + this.options.blockClass).classList.add('dragged');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+        this.draggedElement = target;
+    };
+
+    Switcheroo.prototype.dragOver = function(e) {
+        e.stopPropagation();
+        let target = e.target.closest('li');
+        if(this.isBefore(this.draggedElement, target)) {
+            this.insertDraggedBefore(this.draggedElement, target);
+        } else {
+            this.insertDraggedBefore(this.draggedElement, target.nextSibling);
+        }
+    };
+
+    Switcheroo.prototype.insertDraggedBefore = function(el1, el2) {
+        el2.parentNode.insertBefore(el1, el2);
+    };
+
+    Switcheroo.prototype.dragEnd = function(e) {
+        e.stopPropagation();
+        e.target.closest('.' + this.options.blockClass).classList.remove('dragged');
+        this.draggedElement = null;
+        this.sortSwitcheroo();
+    };
+
+    Switcheroo.prototype.sortSwitcheroo = function() {
+        let els = document.querySelectorAll('#switcheroo [data-id]');
+        /* get new order */
+        let newOrder = [];
+        els.forEach(el => {
+            newOrder.push(el.dataset.id);
+        });
+
+
+        let result = [];
+        newOrder.forEach((key) => {
+            /* go through each id added in new order */
+            var found = false;
+            this.switcherooCredentials.filter(function(item) {
+                if(!found && item.id == key) {
+                    result.push(item);
+                    found = true;
+                    return false;
+                }
+                return true;
+            })
+        });
+        this.updateStorage(result);
+    };
+
+    global.Switcheroo = Switcheroo;
+})(window); 
