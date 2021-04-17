@@ -8,7 +8,7 @@
 
         var defaults = {
             logo: '',
-            enableReorder: false,
+            enableReorder: true,
             confirm: true,
             updateAvatar: true,
             customButtons: [],
