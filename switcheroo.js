@@ -318,9 +318,9 @@
                     });
                 }
                 if(!button) return false;
-                if(Array.isArray(el.classes)) button.classList.add(...el.classes);
+                if(Array.isArray(el.classes)) button.classList.add(...el.classes.map(x => `${c}--${x}`));
                 if (typeof el.before === "boolean" && el.before) button.style.order = "-1";
-                button.classList.add(c + '__squircle', c + '__button');
+                button.classList.add(c + '__squircle', c + '__custom-button');
                 button.innerHTML = el.html;
                 if(el.tooltip && typeof el.tooltip === "string") button.appendChild(this.createTooltip(el.tooltip));
                 wrapper.appendChild(button);
