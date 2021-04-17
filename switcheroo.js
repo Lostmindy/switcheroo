@@ -167,7 +167,8 @@
         let user_id = user.dataset.id;
         let toUpdate = this.findSwitcheroo(user_id);
         let currentAvatar = monomer.user().avatar();
-        if(toUpdate['avatar'] != currentAvatar) toUpdate['avatar'] = currentAvatar;
+        if(toUpdate['avatar'] == currentAvatar) return;
+        toUpdate['avatar'] = currentAvatar;
         this.updateRecord();
     };
 
