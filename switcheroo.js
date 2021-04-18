@@ -115,7 +115,9 @@
 
     Switcheroo.prototype.logout = function(success, error) {
         let t = this;
-        return monomer.logout();
+        return monomer.logout().then(res => {
+            this.statusCallbacks(res, success, error);
+        });
     };
 
     Switcheroo.prototype.statusCallbacks = function(res, success, error) {
