@@ -115,7 +115,9 @@
 
     Switcheroo.prototype.logout = function(success, error) {
         let t = this;
-        return monomer.logout();
+        return monomer.logout().then(res => {
+            this.statusCallbacks(res, success, error);
+        });
     };
 
     Switcheroo.prototype.statusCallbacks = function(res, success, error) {
@@ -318,6 +320,7 @@
                     });
                 }
                 if(!button) return false;
+                if(Array.isArray(el.classes)) button.classList.add(...el.classes.map(x => `${c}__button--${x}`));
                 if (typeof el.before === "boolean" && el.before) button.style.order = "-1";
                 button.classList.add(c + '__squircle', c + '__button');
                 button.innerHTML = el.html;
