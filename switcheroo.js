@@ -3,7 +3,7 @@ const DEFAULT_LANG = {
         add: "Associer un personnage"
     },
     msg: {
-        error: "Une erreur est surviendu lors du Switcheroo.",
+        error: "Une erreur est survenue lors du Switcheroo.",
         confirm: "Confirmer le Switcheroo de personnage ?"
     },
     modal: {
@@ -24,7 +24,7 @@ const DEFAULT_OPT = {
     blockClass: 'switcheroo',
     deleteIcon: `×`,
     addIcon: `+`,
-    errorMsg: 'Une erreur est surviendue lors du Switcheroo.',
+    errorMsg: 'Une erreur est survenue lors du Switcheroo.',
     confirmMsg: 'Confirmer le Switcheroo de personnage ?',
     modal: {}
 };
@@ -169,7 +169,7 @@ function extend(obj1, obj2) {
 
     Switcheroo.prototype.findSwitcheroo = function (id) {
         return this.switcherooCredentials.find(x => x.id === id);
-    }
+    };
 
     Switcheroo.prototype.deleteSwitcheroo = function (id) {
         this.switcherooCredentials = this.switcherooCredentials.filter(function (obj) {
@@ -183,7 +183,7 @@ function extend(obj1, obj2) {
             id: this.catchID(data),
             avatar: this.catchAvatar(data),
             username: this.catchUsername(data)
-        }
+        };
     };
 
     Switcheroo.prototype.credentialsExists = function (id) {
@@ -260,7 +260,7 @@ function extend(obj1, obj2) {
         login.classList.add(c + '__squircle', c + '__squircle--button');
         login.dataset.action = 'open-login';
         login.innerHTML = this.options.addIcon;
-        login.appendChild(this.createTooltip(this.lang.button.add))
+        login.appendChild(this.createTooltip(this.lang.button.add));
         wrapper.appendChild(login);
 
         this.createCustomButtons(wrapper);
@@ -288,7 +288,7 @@ function extend(obj1, obj2) {
 
 
         // create avatar
-        let avatar = document.createElement("div")
+        let avatar = document.createElement("div");
         avatar.classList.add(c + '__avatar');
         avatar.innerHTML = user.avatar.replace(/\\"/g, '"');
         if (this.options.enableReorder) {
@@ -348,7 +348,19 @@ function extend(obj1, obj2) {
                     });
                 }
                 if (!button) return false;
-                if (Array.isArray(el.classes)) button.classList.add(...el.classes.map(x => `${c}__button--${x}`));
+                if(el.classes) {
+                    const listeClasses = [];
+                    if(typeof el.classes === 'string') {
+                        listeClasses.push(el.classes);
+                    } else if(typeof el.classes === 'object') {
+                        listeClasses.push(...Object.values(el.classes));
+                    }
+                    try {
+                        button.classList.add(...listeClasses.map(x => `${c}__button--${x}`));
+                    } catch(e) {
+                        console.error("[Switcheroo] Erreur dans le nom de classe d'un bouton\n", e);
+                    }
+                }
                 if (typeof el.before === "boolean" && el.before) button.style.order = "-1";
                 button.classList.add(c + '__squircle', c + '__button');
                 button.innerHTML = el.html;
@@ -427,6 +439,7 @@ function extend(obj1, obj2) {
             VD.h('input', {
                 type: 'checkbox',
                 style: 'display: none;',
+                'aria-label': 'Autologin',
                 name: 'autologin',
                 checked: true
             }),
@@ -435,6 +448,7 @@ function extend(obj1, obj2) {
             },
                 VD.h('button', {
                     name: 'login',
+                    type: 'submit',
                     className: c + '__form-button'
                 }, t.lang.modal.login_button)
             )
