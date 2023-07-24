@@ -1,4 +1,5 @@
 # Switcheroo
+[![](https://data.jsdelivr.com/v1/package/gh/caezd/switcheroo/badge)](https://www.jsdelivr.com/package/gh/caezd/switcheroo)
 
 Switcheroo est un plugin pour [Forumactif](https://www.forumactif.com/) qui permet de rassembler plusieurs comptes dans une barre de navigation rapide pour changer de compte d'un clic. L'interface se veut intuitive, et une fois les prérequis remplis, l'installation et la personnalisation vous permettront d'adapter Switcheroo aux couleurs de votre design.
 
