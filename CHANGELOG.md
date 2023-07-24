@@ -4,9 +4,11 @@ Tous les futurs changements seront documentés dans ce fichier.
 ## [Unreleased]
 
 ## [1.1.2] - 2023-07-24
-### Changed
+### Added
 - Ajout d'une documentation, en français et en anglais
 - Ajout d'un failsafe sur l'option des boutons customisés
+- 
+### Changed
 - Petit coup d'ESLint
 - Petit coup d'accessibilité (aria-label, etc.)
 
