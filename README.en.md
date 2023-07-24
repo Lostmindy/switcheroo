@@ -1,4 +1,5 @@
 # Switcheroo
+[![](https://data.jsdelivr.com/v1/package/gh/caezd/switcheroo/badge)](https://www.jsdelivr.com/package/gh/caezd/switcheroo)
 
 Switcheroo is a [Forumotion](https://www.forumotion.com/) plugin that allows an user to group multiple accounts in a quick nav bar to switch from one to another in just one click. The interface is intuitive, and once the prerequiste steps have been followed, you can customise Switcheroo so it matches your theme colours. 
 
