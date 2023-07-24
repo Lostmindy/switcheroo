@@ -7,7 +7,7 @@ Tous les futurs changements seront documentés dans ce fichier.
 ### Added
 - Ajout d'une documentation, en français et en anglais
 - Ajout d'un failsafe sur l'option des boutons customisés
-- 
+
 ### Changed
 - Petit coup d'ESLint
 - Petit coup d'accessibilité (aria-label, etc.)
